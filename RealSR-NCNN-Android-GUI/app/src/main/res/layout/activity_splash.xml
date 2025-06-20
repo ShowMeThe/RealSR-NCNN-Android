@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorPrimary"
+    tools:context=".SplashActivity">
+
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/mainLogo"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:src="@mipmap/ic_launcher"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        app:indicatorColor="?colorOnPrimary"
+        app:layout_constraintTop_toBottomOf="@+id/mainLogo"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginHorizontal="30dp"
+        android:maxWidth="400dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

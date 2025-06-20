@@ -7,15 +7,102 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.WorkerThread;
+
 public class AssetsCopyer {
 
     private static final String TAG = "AssetsCopyer";
+
+    public interface AssetsFileCopyListener{
+        void onStart(int max);
+        void onError(Exception e);
+        void onProgress(int progress);
+        void onEnd();
+    }
+
+    @WorkerThread
+    public static void releaseAssetsToCache(Context context,String srcPath, File destDir,
+                                            Boolean skipExistFile,
+                                            AssetsFileCopyListener listener){
+        List<String> allFiles = new ArrayList<>();
+        AssetManager assetManager = context.getAssets();
+
+        try{
+            collectAllFiles(assetManager,srcPath, allFiles);
+            int index = 0;
+            int totalFiles = allFiles.size();
+            if(listener != null){
+                listener.onStart(totalFiles);
+            }
+            for (String fullPath : allFiles) {
+                File outFile = new File(destDir, fullPath);
+                File parent = outFile.getParentFile();
+                if (!parent.exists()) parent.mkdirs();
+                if(!(outFile.exists() && skipExistFile)){
+                    copyAssetFile(assetManager, fullPath, outFile);
+                }
+                if(listener != null){
+                    listener.onProgress(++index);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if(listener != null){
+                listener.onError(e);
+            }
+        }
+        if(listener != null){
+            listener.onEnd();
+        }
+    }
+
+
+    private static void collectAllFiles(AssetManager assetManager,String path, List<String> outList) throws IOException {
+        String[] files = assetManager.list(path);
+        if (files == null || files.length == 0) {
+            outList.add(path.substring(path.lastIndexOf("/") + 1));
+        } else {
+            for (String name : files) {
+                String fullPath = path.isEmpty() ? name : path + "/" + name;
+                if (isAssetFile(assetManager,fullPath)) {
+                    outList.add(fullPath);
+                } else {
+                    collectAllFiles(assetManager,fullPath, outList);
+                }
+            }
+        }
+    }
+
+    private static boolean isAssetFile(AssetManager assetManager,String path) throws IOException {
+        String[] list = assetManager.list(path);
+        return list == null || list.length == 0;
+    }
+
+    private static void copyAssetFile(AssetManager assetManager,String assetPath, File outFile) throws IOException {
+
+        InputStream in = assetManager.open(assetPath);
+        OutputStream out = new FileOutputStream(outFile);
+        try {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+        }finally {
+            out.flush();
+            out.close();
+            in.close();
+        }
+    }
 
     public static void releaseAssets(Context context, String assetsDir,
                                      String releaseDir, Boolean skipExistFile) {
